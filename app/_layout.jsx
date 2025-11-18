@@ -4,15 +4,18 @@ import React, { useContext } from "react";
 import { ActivityIndicator, useColorScheme, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AuthContext, AuthProvider } from "../context/AuthContext";
+import { TeamProvider } from "../context/TeamProvider";
 import { authStyles as styles } from "../styles/authStyles";
 import { theme } from "../theme/colors";
 import VerifyEmailScreen from "./auth/verifyEmail";
 export default function App() {
   return (
     <AuthProvider>
+        <TeamProvider>
       <SafeAreaProvider style={{ flex: 1 }}>
         <RootLayout />
       </SafeAreaProvider>
+      </TeamProvider>
     </AuthProvider>
   );
 }

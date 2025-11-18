@@ -1,34 +1,77 @@
-import { LinearGradient } from "expo-linear-gradient";
-import { useContext } from "react";
-import { ActivityIndicator, Text, useColorScheme, View } from "react-native";
+import { useContext, useEffect, useState } from "react";
+import { FlatList, Text, View } from "react-native";
 import { AuthContext } from "../../context/AuthContext";
-import { authStyles as styles } from "../../styles/authStyles";
-import { theme } from "../../theme/colors";
+import { TeamContext } from "../../context/TeamProvider";
 
-export default function Index() {
-  const { userData, isLoading } = useContext(AuthContext);
-  const colorScheme = useColorScheme();
-  const colors = theme[colorScheme === "dark" ? "dark" : "light"];
+export default function HomeScreen() {
+  const { user } = useContext(AuthContext);
+  const { getTeams } = useContext(TeamContext);
 
-  if (isLoading || !userData) {
-    return (
-      <View style={[style.gradientBg, { backgroundColor: colors.inputBackground }]}>
-        <ActivityIndicator size="large" color={colors.buttonGradient[0]} />
-      </View>
+  const [leaderboard, setLeaderboard] = useState([]);
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  const load = async () => {
+    const teams = await getTeams();
+
+    // Teams the user is part of
+    const userTeams = teams.filter((t) =>
+      t.users.some((u) => u.id === user.uid)
     );
-  }
+
+    const combined = [];
+
+    userTeams.forEach((team) => {
+      team.users.forEach((member) => {
+        combined.push({
+          id: member.id,
+          name: member.name,
+          points: member.points,
+          teamName: team.name,
+        });
+      });
+    });
+
+    combined.sort((a, b) => b.points - a.points);
+
+    setLeaderboard(combined);
+  };
 
   return (
-     <LinearGradient
-        colors={colors.backgroundGradient}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.gradientBg}
-      >
-        <View style={styles.innerContainer}>
-          <Text style={[styles.title, { color: colors.text }]}> Welcome, {userData.name}!</Text>
+    <View style={{ flex: 1, padding: 20 }}>
+      <Text style={{ fontSize: 28, fontWeight: "bold", marginBottom: 20 }}>
+        Leaderboard
+      </Text>
+
+      {leaderboard.length === 0 ? (
+        <Text>No leaderboard data yet.</Text>
+      ) : (
+        <FlatList
+          data={leaderboard}
+          keyExtractor={(item) => item.id + item.teamName}
+          renderItem={({ item, index }) => (
+            <View
+              style={{
+                padding: 15,
+                backgroundColor: "#e8e8e8",
+                marginBottom: 10,
+                borderRadius: 10,
+                flexDirection: "row",
+                justifyContent: "space-between",
+              }}
+            >
+              <Text style={{ fontSize: 18 }}>
+                #{index + 1} — {item.name} ({item.teamName})
+              </Text>
+              <Text style={{ fontSize: 18, fontWeight: "bold" }}>
+                {item.points} pts
+              </Text>
+            </View>
+          )}
+        />
+      )}
     </View>
-      </LinearGradient>
-    
   );
 }

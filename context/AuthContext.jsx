@@ -11,6 +11,7 @@ import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { createContext, useEffect, useState } from "react";
 import { Alert } from "react-native";
 import { auth, db } from "../utils/firebase";
+
 export const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
@@ -18,33 +19,42 @@ export function AuthProvider({ children }) {
   const [userData, setUserData] = useState(null);
   const [isUserAuthenticated, setIsUserAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+
   const router = useRouter();
 
+  // -------------------------------
+  // AUTH STATE LISTENER
+  // -------------------------------
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (currentUser) {
+        await reload(currentUser);
 
-useEffect(() => {
-  const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-    if (currentUser) {
-      await reload(currentUser);
+        const userDoc = await getDoc(doc(db, "users", currentUser.uid));
 
-      const userDoc = await getDoc(doc(db, "users", currentUser.uid));
+        setUser(currentUser);
+        setUserData(
+          userDoc.exists()
+            ? userDoc.data()
+            : { email: currentUser.email }
+        );
 
-      setUser(currentUser); // keep Firebase User
-      setUserData(userDoc.exists() ? userDoc.data() : { email: currentUser.email });
+        setIsUserAuthenticated(currentUser.emailVerified);
+      } else {
+        setUser(null);
+        setUserData(null);
+        setIsUserAuthenticated(false);
+      }
 
-      setIsUserAuthenticated(currentUser.emailVerified);
-    } else {
-      setUser(null);
-      setUserData(null);
-      setIsUserAuthenticated(false);
-    }
-    setIsLoading(false);
-  });
+      setIsLoading(false);
+    });
 
-  return unsubscribe;
-}, []);
+    return unsubscribe;
+  }, []);
 
-
-
+  // -------------------------------
+  // SEND EMAIL VERIFICATION
+  // -------------------------------
   const sendVerificationEmail = async (user) => {
     if (!user) return;
     try {
@@ -58,9 +68,11 @@ useEffect(() => {
     }
   };
 
-
-  const registerUser = async (email, password, name, selectedDate, errors = {}) => {
-    if (!email || !password || !name || !selectedDate) {
+  // -------------------------------
+  // REGISTER USER
+  // -------------------------------
+  const registerUser = async (email, password, name, birthday, errors = {}) => {
+    if (!email || !password || !name || !birthday) {
       Alert.alert("Error", "Please fill in all fields including birthday.");
       return;
     }
@@ -70,22 +82,26 @@ useEffect(() => {
     }
 
     setIsLoading(true);
-    try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const newUser = userCredential.user;
 
+    try {
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+
+      const newUser = userCredential.user;
 
       await setDoc(doc(db, "users", newUser.uid), {
         name: name.trim(),
         email: newUser.email,
-        birthday: selectedDate.toISOString(),
+        birthday: birthday.toISOString(),
         createdAt: new Date().toISOString(),
         lastLoggedIn: new Date().toISOString(),
         emailVerified: false,
       });
 
       await sendVerificationEmail(newUser);
-
     } catch (error) {
       Alert.alert("Error", error.message);
     } finally {
@@ -93,26 +109,36 @@ useEffect(() => {
     }
   };
 
-
+  // -------------------------------
+  // LOGIN USER
+  // -------------------------------
   const login = async (email, password, errors = {}) => {
     if (!email || !password) {
       Alert.alert("Error", "Please fill in all fields.");
       return;
     }
+
     if (Object.keys(errors).length > 0) {
       Alert.alert("Invalid Fields", "Please correct highlighted fields.");
       return;
     }
 
     setIsLoading(true);
+
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+
       const loggedInUser = userCredential.user;
 
       await reload(loggedInUser);
 
       if (!loggedInUser.emailVerified) {
         await sendVerificationEmail(loggedInUser);
+
         Alert.alert(
           "Email Verification Required",
           "Please verify your email before logging in."
@@ -127,6 +153,7 @@ useEffect(() => {
 
       setUser(loggedInUser);
       setIsUserAuthenticated(true);
+
       router.replace("(tabs)");
     } catch (error) {
       Alert.alert("Error", error.message);
@@ -135,7 +162,9 @@ useEffect(() => {
     }
   };
 
-
+  // -------------------------------
+  // LOGOUT
+  // -------------------------------
   const logout = async () => {
     setIsLoading(true);
     try {

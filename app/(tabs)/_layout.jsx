@@ -13,7 +13,7 @@ export default function TabsLayout() {
                     <Ionicons name="home-outline" size={size} color={color} />
                 ),
             }} />
-            <Tabs.Screen name="leaderboard" options={{
+            <Tabs.Screen name="teams" options={{
                 tabBarIcon: ({ color, size }) => (
                     <Ionicons name="list" size={size} color={color} />
                 ),
