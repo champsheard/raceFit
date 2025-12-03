@@ -34,17 +34,19 @@ export default function TeamsScreen() {
   const [sheetVisible, setSheetVisible] = useState(false);
   const slideAnim = useRef(new Animated.Value(300)).current;
 
+
   // Open action sheet
   const openSheet = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setSheetVisible(true);
-    Animated.spring(slideAnim, {
+    Animated.timing(slideAnim, {
       toValue: 0,
-      damping: 12,
-      stiffness: 120,
+      duration: 250, // adjust duration if needed
+      easing: Easing.out(Easing.ease),
       useNativeDriver: true,
     }).start();
   };
+
 
   // Close action sheet
   const closeSheet = () => {
