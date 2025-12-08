@@ -1,17 +1,27 @@
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import { Animated, Platform, StyleSheet, Text, TouchableOpacity, useColorScheme, View } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import {
+  Animated,
+  Platform,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  useColorScheme,
+  View,
+} from "react-native";
+import { theme } from "../theme/colors";
 
 export default function TeamCard({ item, onPress }) {
-  const colorScheme = useColorScheme(); // detect light/dark
-  const themeColors = colorScheme === "dark" ? require("../theme/colors").theme.dark : require("../theme/colors").theme.light;
+  const colorScheme = useColorScheme();
+  const palette = colorScheme === "dark" ? theme.dark : theme.light;
 
-  if (!item || !item.id) return null; // Prevent empty cards
+  if (!item || !item.id) return null;
 
   const scale = new Animated.Value(1);
 
   const onPressIn = () => {
-    Animated.spring(scale, { toValue: 0.97, useNativeDriver: true }).start();
+    Animated.spring(scale, { toValue: 0.96, useNativeDriver: true }).start();
     Haptics.selectionAsync();
   };
 
@@ -22,25 +32,35 @@ export default function TeamCard({ item, onPress }) {
   return (
     <Animated.View style={{ transform: [{ scale }] }}>
       <TouchableOpacity
-        style={[
-          styles.card,
-          {
-            backgroundColor: themeColors.inputBackground,
-            shadowColor: themeColors.shadow,
-          },
-        ]}
-        activeOpacity={0.7}
+        activeOpacity={0.85}
         onPressIn={onPressIn}
         onPressOut={onPressOut}
         onPress={onPress}
+        style={{ marginBottom: 14 }}
       >
-        <View style={{ flex: 1 }}>
-          <Text style={[styles.teamName, { color: themeColors.text }]}>{item.name}</Text>
-          <Text style={[styles.memberCount, { color: themeColors.textSecondary }]}>
-            {item.users?.length || 0} members
-          </Text>
-        </View>
-        <Ionicons name="chevron-forward" size={20} color={themeColors.textSecondary} />
+        <LinearGradient
+          colors={palette.cardGradient}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[styles.card, { shadowColor: palette.shadow }]}
+        >
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.teamName, { color: palette.text }]}>
+              {item.name}
+            </Text>
+            <Text
+              style={[styles.memberCount, { color: palette.textSecondary }]}
+            >
+              {item.users?.length || 0} members
+            </Text>
+          </View>
+
+          <Ionicons
+            name="chevron-forward"
+            size={22}
+            color={palette.textSecondary}
+          />
+        </LinearGradient>
       </TouchableOpacity>
     </Animated.View>
   );
@@ -48,23 +68,26 @@ export default function TeamCard({ item, onPress }) {
 
 const styles = StyleSheet.create({
   card: {
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    marginBottom: 12,
-    borderRadius: 18,
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: Platform.OS === "android" ? 2 : 0,
+    paddingVertical: 18,
+    paddingHorizontal: 22,
+    borderRadius: 20,
     flexDirection: "row",
     alignItems: "center",
+
+    // Better premium shadows
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: Platform.OS === "android" ? 5 : 0,
   },
   teamName: {
-    fontSize: 17,
-    fontWeight: "600",
+    fontSize: 18,
+    fontWeight: "700",
   },
   memberCount: {
     marginTop: 4,
     fontSize: 14,
+    fontWeight: "500",
+    opacity: 0.8,
   },
 });

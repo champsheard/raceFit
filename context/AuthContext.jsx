@@ -161,6 +161,87 @@ export function AuthProvider({ children }) {
       setIsLoading(false);
     }
   };
+  const updateUserProfile = async (updates = {}) => {
+  if (!user) {
+    Alert.alert("Error", "No authenticated user.");
+    return;
+  }
+
+  setIsLoading(true);
+
+  try {
+    const userRef = doc(db, "users", user.uid);
+    const firestoreUpdates = {};
+
+    // --- Full Name ---
+    if (updates.fullName !== undefined) {
+      firestoreUpdates.name = updates.fullName.trim();
+    }
+
+    // --- School ---
+    if (updates.school !== undefined) {
+      firestoreUpdates.school = updates.school.trim();
+    }
+
+    // --- Bio ---
+    if (updates.bio !== undefined) {
+      firestoreUpdates.bio = updates.bio.trim();
+    }
+
+    // --- Birthday ---
+    if (updates.birthday !== undefined) {
+      firestoreUpdates.birthday = updates.birthday;
+    }
+
+    // --- Profile Photo (Firestore ONLY — NOT Firebase Auth) ---
+    if (updates.profilePhoto !== undefined) {
+      firestoreUpdates.profilePhoto = updates.profilePhoto;
+    }
+
+    // --- Update Email ---
+    if (updates.email && updates.email.trim() !== user.email) {
+      try {
+        await user.updateEmail(updates.email.trim());
+        firestoreUpdates.email = updates.email.trim();
+      } catch (err) {
+        Alert.alert(
+          "Email Update Failed",
+          "Please re-login before changing your email."
+        );
+      }
+    }
+
+    // --- Update Password ---
+    if (updates.newPassword && updates.newPassword.trim().length >= 6) {
+      try {
+        await user.updatePassword(updates.newPassword.trim());
+      } catch (err) {
+        Alert.alert(
+          "Password Update Failed",
+          "Please re-login before changing your password."
+        );
+      }
+    }
+
+    // --- Apply Firestore Updates ---
+    if (Object.keys(firestoreUpdates).length > 0) {
+      await updateDoc(userRef, firestoreUpdates);
+    }
+
+    // Reload user + refresh local userData
+    await reload(user);
+    const updatedDoc = await getDoc(userRef);
+    setUserData(updatedDoc.data());
+
+    Alert.alert("Success", "Your profile has been updated.");
+  } catch (error) {
+    console.log("Profile update error:", error);
+    Alert.alert("Error", error.message);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
 
   // -------------------------------
   // LOGOUT
@@ -190,6 +271,7 @@ export function AuthProvider({ children }) {
         logout,
         sendVerificationEmail,
         isLoading,
+        updateUserProfile,
         setIsLoading,
       }}
     >
