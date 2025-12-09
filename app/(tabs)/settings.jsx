@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { Picker } from '@react-native-picker/picker';
 import * as ImageManipulator from "expo-image-manipulator";
 import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
@@ -18,6 +19,7 @@ import {
   View,
 } from "react-native";
 import { AuthContext } from "../../context/AuthContext";
+import { TeamContext } from "../../context/TeamProvider";
 import { authStyles } from "../../styles/authStyles";
 import { theme } from "../../theme/colors";
 import { IMGBB_API_KEY } from "../../utils/config";
@@ -30,9 +32,11 @@ export default function SettingsScreen() {
   const { userData, logout, updateUserProfile, isLoading } =
     useContext(AuthContext);
 
+  const { getTeams, teams } = useContext(TeamContext);
+
   const [fullName, setFullName] = useState(userData?.name || "");
   const [email, setEmail] = useState(userData?.email || "");
-  const [school, setSchool] = useState(userData?.school || "");
+  const [defaultTeam, setDefaultTeam] = useState(userData?.defaultTeam || "");
   const [bio, setBio] = useState(userData?.bio || "");
   const [birthday, setBirthday] = useState(
     userData?.birthday ? new Date(userData.birthday) : new Date()
@@ -42,6 +46,7 @@ export default function SettingsScreen() {
   const [profilePhoto, setProfilePhoto] = useState(userData?.profilePhoto || "");
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [updating, setUpdating] = useState(false);
+  const [showTeamPicker, setShowTeamPicker] = useState(false);
 
   const today = new Date();
   const thirteenYearsAgo = new Date(
@@ -97,7 +102,6 @@ export default function SettingsScreen() {
         const newUrl = data.data.url;
         setProfilePhoto(newUrl);
         await updateUserProfile({ profilePhoto: newUrl });
-        Alert.alert("✅ Profile photo updated!");
       } else {
         console.error("ImgBB response:", data);
         Alert.alert("Error", "Failed to upload image.");
@@ -116,14 +120,14 @@ export default function SettingsScreen() {
       await updateUserProfile({
         fullName: fullName.trim(),
         email: email.trim(),
-        school: school.trim(),
+        defaultTeam: defaultTeam.trim(),
         bio: bio.trim(),
         birthday: tempBirthday.toISOString(),
         newPassword: newPassword.trim(),
         profilePhoto,
       });
       setBirthday(tempBirthday);
-      Alert.alert("✅ Saved", "Your profile was updated successfully.");
+      Alert.alert("Saved", "Your profile was updated successfully.");
     } catch (error) {
       console.error("Update error:", error);
       Alert.alert("Error", error.message);
@@ -148,7 +152,7 @@ export default function SettingsScreen() {
       colors={palette.backgroundGradient}
       style={[authStyles.container, { paddingHorizontal: 20 }]}
     >
-      {/* Floating Back Button */}
+      {/* Floating Back Button
       <TouchableOpacity
         onPress={() => router.back()}
         style={{
@@ -168,7 +172,7 @@ export default function SettingsScreen() {
         activeOpacity={0.8}
       >
         <Ionicons name="arrow-back" size={24} color={palette.text} />
-      </TouchableOpacity>
+      </TouchableOpacity> */}
 
       {/* Floating Logout Button */}
       <TouchableOpacity
@@ -312,14 +316,63 @@ export default function SettingsScreen() {
                 />
               </View>
             )}
+            {/* DEFAULT TEAM */}
+            <TouchableOpacity
+              onPress={() => setShowTeamPicker(!showTeamPicker)}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+                borderColor: palette.inputBorder,
+                borderWidth: 1,
+                borderRadius: 10,
+                padding: 14,
+                backgroundColor: palette.card,
+                marginTop: 10,
+              }}
+            >
+              <Text style={{ color: defaultTeam ? palette.text : palette.placeholder, fontWeight: "600" }}>
+                {defaultTeam
+                  ? teams.find((t) => t.id === defaultTeam)?.name
+                  : "Select a Default Team"}
+              </Text>
+              <Ionicons
+                name={showTeamPicker ? "chevron-up-outline" : "chevron-down-outline"}
+                size={22}
+                color={palette.textSecondary}
+              />
+            </TouchableOpacity>
 
-            <TextInput
-              placeholder="School"
-              placeholderTextColor={palette.placeholder}
-              value={school}
-              onChangeText={setSchool}
-              style={[authStyles.input, { borderColor: palette.inputBorder, color: palette.text }]}
-            />
+            {showTeamPicker && (
+              <Picker
+                selectedValue={defaultTeam}
+                onValueChange={(value) => {
+                  setDefaultTeam(value);
+                  setShowTeamPicker(false); // close picker after selection
+                }}
+                style={[
+                  authStyles.input,
+                  {
+                    borderColor: palette.inputBorder,
+                    color: palette.text,
+                    marginTop: 5,
+                  },
+                ]}
+                dropdownIconColor={palette.text}
+              >
+                <Picker.Item
+                  label="Select a Team"
+                  value=""
+                  color={palette.placeholder}
+                />
+
+                {teams.map((team) => (
+                  <Picker.Item key={team.id} label={team.name} value={team.id} />
+                ))}
+              </Picker>
+            )}
+
+
             <TextInput
               placeholder="Bio"
               placeholderTextColor={palette.placeholder}

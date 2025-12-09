@@ -99,6 +99,7 @@ export function AuthProvider({ children }) {
         createdAt: new Date().toISOString(),
         lastLoggedIn: new Date().toISOString(),
         emailVerified: false,
+        defaultTeam: null,
       });
 
       await sendVerificationEmail(newUser);
@@ -161,6 +162,13 @@ export function AuthProvider({ children }) {
       setIsLoading(false);
     }
   };
+
+
+
+
+  // -------------------------------
+  // Update User Profile
+  // -------------------------------
   const updateUserProfile = async (updates = {}) => {
   if (!user) {
     Alert.alert("Error", "No authenticated user.");
@@ -178,11 +186,6 @@ export function AuthProvider({ children }) {
       firestoreUpdates.name = updates.fullName.trim();
     }
 
-    // --- School ---
-    if (updates.school !== undefined) {
-      firestoreUpdates.school = updates.school.trim();
-    }
-
     // --- Bio ---
     if (updates.bio !== undefined) {
       firestoreUpdates.bio = updates.bio.trim();
@@ -196,6 +199,9 @@ export function AuthProvider({ children }) {
     // --- Profile Photo (Firestore ONLY — NOT Firebase Auth) ---
     if (updates.profilePhoto !== undefined) {
       firestoreUpdates.profilePhoto = updates.profilePhoto;
+    }
+    if (updates.defaultTeam !== undefined) {
+      firestoreUpdates.defaultTeam = updates.defaultTeam
     }
 
     // --- Update Email ---
@@ -233,7 +239,7 @@ export function AuthProvider({ children }) {
     const updatedDoc = await getDoc(userRef);
     setUserData(updatedDoc.data());
 
-    Alert.alert("Success", "Your profile has been updated.");
+    // Alert.alert("Success", "Your profile has been updated.");
   } catch (error) {
     console.log("Profile update error:", error);
     Alert.alert("Error", error.message);
