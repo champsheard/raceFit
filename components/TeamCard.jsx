@@ -1,6 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import { LinearGradient } from "expo-linear-gradient";
 import {
   Animated,
   Platform,
@@ -30,40 +29,38 @@ export default function TeamCard({ item, onPress }) {
   };
 
   return (
-    <Animated.View style={{ transform: [{ scale }] }}>
-      <TouchableOpacity
-        activeOpacity={0.85}
-        onPressIn={onPressIn}
-        onPressOut={onPressOut}
-        onPress={onPress}
-        style={{ marginBottom: 14 }}
+  <Animated.View style={{ transform: [{ scale }] }}>
+    <TouchableOpacity
+      activeOpacity={0.85}
+      onPressIn={onPressIn}
+      onPressOut={onPressOut}
+      onPress={onPress}
+      style={{ marginBottom: 14 }}
+    >
+      <View
+        style={[
+          styles.card,
+          { backgroundColor: palette.cardBackground, shadowColor: palette.shadow },
+        ]}
       >
-        <LinearGradient
-          colors={palette.cardGradient}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={[styles.card, { shadowColor: palette.shadow }]}
-        >
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.teamName, { color: palette.text }]}>
-              {item.name}
-            </Text>
-            <Text
-              style={[styles.memberCount, { color: palette.textSecondary }]}
-            >
-              {item.users?.length || 0} members
-            </Text>
-          </View>
+        <View style={{ flex: 1 }}>
+          <Text style={[styles.teamName, { color: palette.text }]}>
+            {item.name}
+          </Text>
+          <Text style={[styles.memberCount, { color: palette.textSecondary }]}>
+            {item.users?.length || 0} members
+          </Text>
+        </View>
 
-          <Ionicons
-            name="chevron-forward"
-            size={22}
-            color={palette.textSecondary}
-          />
-        </LinearGradient>
-      </TouchableOpacity>
-    </Animated.View>
-  );
+        <Ionicons
+          name="chevron-forward"
+          size={22}
+          color={palette.textSecondary}
+        />
+      </View>
+    </TouchableOpacity>
+  </Animated.View>
+);
 }
 
 const styles = StyleSheet.create({

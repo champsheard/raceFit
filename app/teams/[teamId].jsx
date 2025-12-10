@@ -14,10 +14,12 @@ import {
   TouchableOpacity,
   View
 } from "react-native";
+import { AuthContext } from "../../context/AuthContext";
 import { TeamContext } from "../../context/TeamProvider";
 import { theme } from "../../theme/colors";
 
 export default function TeamPage({ mode = "light" }) {
+  const { getUserData, user } = useContext(AuthContext)
   const { teamId } = useLocalSearchParams();
   const { listenToTeam, leaveTeam } = useContext(TeamContext);
   const [team, setTeam] = useState(null);
@@ -25,11 +27,35 @@ export default function TeamPage({ mode = "light" }) {
   const router = useRouter();
 
   const palette = mode === "dark" ? theme.dark : theme.light;
-
   useEffect(() => {
-    const unsub = listenToTeam(teamId, setTeam);
+    const unsub = listenToTeam(teamId, async (teamData) => {
+      if (!teamData || !teamData.users) {
+        setTeam(teamData);
+        return;
+      }
+
+      // Build array with names using getUserData()
+      const usersWithNames = await Promise.all(
+        teamData.users.map(async (u) => {
+          const userProfile = await getUserData(u.id);
+
+          return {
+            ...u,
+            name: userProfile?.name || "Unknown User",
+          };
+        })
+      );
+
+      // Save merged result
+      setTeam({
+        ...teamData,
+        users: usersWithNames,
+      });
+    });
+
     return unsub;
   }, [teamId]);
+
 
   useEffect(() => {
     if (team) {
@@ -51,7 +77,15 @@ export default function TeamPage({ mode = "light" }) {
     }
   };
 
-  const handleLeaveTeam = () => {
+  const handleLeaveTeam = async () => {
+    const isOwner = team.owner === user.uid;
+
+    if (isOwner) {
+      router.push(`./delete/${teamId}`);
+      return;
+    }
+
+
     Alert.alert(
       "Leave Team",
       "Are you sure you want to leave this team?",
@@ -60,18 +94,20 @@ export default function TeamPage({ mode = "light" }) {
         {
           text: "Leave",
           style: "destructive",
-          onPress: () => {
-            leaveTeam(teamId);
-            router.back();
+          onPress: async () => {
+            const success = await leaveTeam(team.id);
+            if (success) router.back();
           },
         },
       ]
     );
   };
 
+
+
   const handleShowInfo = () => {
     Alert.alert(
-      "📊 Team Statistics",
+      " Team Statistics",
       `Team: ${team.name}\nMembers: ${team.users.length}\nTotal Points: ${team.users.reduce((a, u) => a + u.points, 0)}\nJoin Code: ${team.joinCode?.code || "N/A"}`,
       [{ text: "Close", style: "cancel" }]
     );

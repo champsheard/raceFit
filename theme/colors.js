@@ -9,7 +9,7 @@ export const theme = {
     placeholder: "#6B7280",
     error: "#DC2626",
     shadow: "#1E293B",
-    cardGradient: ["#FFFFFF", "#F3F6FF"], 
+    cardBackground: "#ffffff"
   },
 
   dark: {
@@ -22,6 +22,6 @@ export const theme = {
     placeholder: "#94A3B8",
     error: "#F87171",
     shadow: "#000000",
-    cardGradient: ["#1E293B", "#0F172A"],
+    cardBackground: "#1D273C"
   },
 };

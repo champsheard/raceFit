@@ -6,7 +6,7 @@ import { db } from "../utils/firebase";
 export const TeamContext = createContext();
 
 export function TeamProvider({ children }) {
-  const { user } = useContext(AuthContext); 
+  const { user } = useContext(AuthContext);
   const [teams, setTeams] = useState([]);
   const [loadingTeams, setLoadingTeams] = useState(false);
 
@@ -15,15 +15,15 @@ export function TeamProvider({ children }) {
   const generateJoinCode = () => Math.floor(10000000 + Math.random() * 90000000).toString();
 
   /* ---------------------- CREATE TEAM ----------------------------- */
-  const createTeam = async (name, ownerID, description, resetInterval) => {
+  const createTeam = async (name, description) => {
     try {
       const code = generateJoinCode();
       const teamRef = doc(collection(db, "teams"));
+      const ownerID = user.uid
 
       await setDoc(teamRef, {
         name: name.trim(),
         owner: ownerID,
-        resetInterval,
         description,
         createdAt: new Date().toISOString(),
         joinCode: {
@@ -39,7 +39,7 @@ export function TeamProvider({ children }) {
 
       await setDoc(doc(db, "teams", teamRef.id, "users", ownerID), {
         points: 0,
-        name: "Owner",
+        id: ownerID,
         joinedAt: new Date().toISOString(),
         lastPointChange: null,
       });
@@ -65,7 +65,7 @@ export function TeamProvider({ children }) {
 
           const usersSnapshot = await getDocs(collection(db, "teams", teamDoc.id, "users"));
           const users = usersSnapshot.docs.map((u) => ({ id: u.id, ...u.data() }))
-                                           .sort((a, b) => b.points - a.points);
+            .sort((a, b) => b.points - a.points);
 
           return { id: teamDoc.id, ...teamDoc.data(), users };
         })
@@ -80,63 +80,82 @@ export function TeamProvider({ children }) {
 
   /* ---------------------- REALTIME LISTENER ---------------------- */
   const listenToAllTeams = () => {
-    if (!user) return () => {};
+    if (!user) return () => { };
 
     setLoadingTeams(true);
 
-    const unsubscribe = onSnapshot(collection(db, "teams"), async (snapshot) => {
-      const rawTeams = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+    const unsubscribe = onSnapshot(collection(db, "teams"), (snapshot) => {
+      (async () => {
+        const rawTeams = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
 
-      const userTeams = await Promise.all(
-        rawTeams.map(async (team) => {
-          const userRef = doc(db, "teams", team.id, "users", user.uid);
-          const userSnap = await getDoc(userRef);
-          if (!userSnap.exists()) return null;
+        const userTeams = await Promise.all(
+          rawTeams.map(async (team) => {
+            const userRef = doc(db, "teams", team.id, "users", user.uid);
+            const userSnap = await getDoc(userRef);
+            if (!userSnap.exists()) return null;
 
-          const usersSnapshot = await getDocs(collection(db, "teams", team.id, "users"));
-          const users = usersSnapshot.docs.map((u) => ({ id: u.id, ...u.data() }))
-                                           .sort((a, b) => b.points - a.points);
+            const usersSnapshot = await getDocs(collection(db, "teams", team.id, "users"));
+            const users = usersSnapshot.docs.map((u) => ({ id: u.id, ...u.data() }))
+              .sort((a, b) => b.points - a.points);
 
-          return { ...team, users };
-        })
-      );
+            return { ...team, users };
+          })
+        );
 
-      setTeams(userTeams.filter(Boolean));
-      setLoadingTeams(false);
+        setTeams(userTeams.filter(Boolean));
+        setLoadingTeams(false);
+      })();
     });
 
     return unsubscribe;
   };
 
-  /* ---------------------- JOIN / LEAVE / POINTS ------------------ */
-  const joinTeamByCode = async (code, userInfo = {}) => {
-    if (!user) return { success: false, error: "No user logged in." };
-    try {
-      if (!/^\d{8}$/.test(code)) return { success: false, error: "Invalid code format (8 digits)." };
+/* ---------------------- JOIN / LEAVE / POINTS ------------------ */
+const joinTeamByCode = async (code, userInfo = {}) => {
+  if (!user) return { success: false, error: "No user logged in." };
 
-      const codeRef = doc(db, "joinCodes", code);
-      const codeSnap = await getDoc(codeRef);
-      if (!codeSnap.exists()) return { success: false, error: "No team found with that code." };
+  try {
+    if (!/^\d{8}$/.test(code)) return { success: false, error: "Invalid code format (8 digits)." };
 
-      const teamId = codeSnap.data().teamId;
+    const codeRef = doc(db, "joinCodes", code);
+    const codeSnap = await getDoc(codeRef);
+    if (!codeSnap.exists()) return { success: false, error: "No team found with that code." };
 
-      await setDoc(doc(db, "teams", teamId, "users", user.uid), {
-        name: userInfo.name || user.displayName || "Unnamed",
-        points: 0,
-        joinedAt: new Date().toISOString(),
-        lastPointChange: null,
-        ...userInfo,
-      });
+    const teamId = codeSnap.data().teamId;
+    const userRef = doc(db, "teams", teamId, "users", user.uid);
+    const userSnap = await getDoc(userRef);
 
-      return { success: true, teamId };
-    } catch (error) {
-      console.error("Error joining team by code:", error);
-      return { success: false, error: "Unexpected error." };
+    if (userSnap.exists()) {
+      return { success: false, error: "User is already in the team." };
     }
-  };
+
+    await setDoc(userRef, {
+      name: userInfo.name || "Unnamed",
+      points: 0,
+      joinedAt: new Date().toISOString(),
+      lastPointChange: null,
+      ...userInfo,
+    });
+
+    return { success: true, teamId };
+  } catch (error) {
+    console.error("Error joining team by code:", error);
+    return { success: false, error: "Unexpected error." };
+  }
+};
+
 
   const leaveTeam = async (teamId) => {
     if (!user) return false;
+
+    const team = teams.find((t) => t.id === teamId);
+    if (!team) return false;
+
+    if (user.uid === team.owner) {
+      alert("You cannot leave a team you own.");
+      return false;
+    }
+
     try {
       await deleteDoc(doc(db, "teams", teamId, "users", user.uid));
       return true;
@@ -186,7 +205,7 @@ export function TeamProvider({ children }) {
 
       const usersSnapshot = await getDocs(collection(db, "teams", teamId, "users"));
       const users = usersSnapshot.docs.map((u) => ({ id: u.id, ...u.data() }))
-                                       .sort((a, b) => b.points - a.points);
+        .sort((a, b) => b.points - a.points);
 
       callback({ id: teamDoc.id, ...teamDoc.data(), users });
     });

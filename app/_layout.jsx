@@ -56,8 +56,8 @@ function RootLayout() {
         <Stack.Screen name="teams/createTeam" options={{ headerShown: false }} />
         <Stack.Screen name="teams/joinTeam" options={{ headerShown: false}} />
         <Stack.Screen name="teams/[teamId]" options={{ headerShown: false}} />
+        <Stack.Screen name="teams/delete/[teamId]" options={{headerShown: false}} />
       </Stack.Protected>
-
       <Stack.Protected guard={!isUserAuthenticated}>
         <Stack.Screen name="auth/login" options={{ headerShown: false }} />
         <Stack.Screen name="auth/register" options={{ headerShown: false }} />

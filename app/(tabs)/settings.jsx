@@ -372,7 +372,7 @@ export default function SettingsScreen() {
               </Picker>
             )}
 
-
+{/* 
             <TextInput
               placeholder="Bio"
               placeholderTextColor={palette.placeholder}
@@ -388,7 +388,7 @@ export default function SettingsScreen() {
                 },
               ]}
               multiline
-            />
+            /> */}
             <TextInput
               placeholder="New Password"
               placeholderTextColor={palette.placeholder}

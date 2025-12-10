@@ -48,11 +48,10 @@ export default function CreateTeamPage() {
           >
             <Ionicons name="arrow-back" size={28} color={colors.textPrimary} />
           </TouchableOpacity>
-
           <ScrollView contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
             <Text style={{ fontSize: 34, fontWeight: "700", color: colors.textPrimary, marginBottom: 30 }}>Create a Team</Text>
             <FormInput label="Team Name" value={name} onChangeText={setName} placeholder="Enter team name" />
-            <FormInput label="Reset Interval" value={resetInterval} onChangeText={setResetInterval} placeholder="Enter number of days" keyboardType="numeric" />
+            {/* <FormInput label="Reset Interval" value={resetInterval} onChangeText={setResetInterval} placeholder="Enter number of days" keyboardType="numeric" /> */}
             <FormInput label="Description" value={description} onChangeText={setDescription} placeholder="Optional description" multiline />
             <GradientButton title="Create Team" onPress={handleCreate} />
           </ScrollView>
