@@ -2,11 +2,12 @@
 ## Completed So Far
 * Auth System
 * System to Join and Create Teams
-* Auto Reload teams on teams page
 
 ## Todo List
 * Finish team system (points & leaving & deleting)
 * Home Page 
+* Auto Reload teams on teams page
+
 
 
 ## 12/2
