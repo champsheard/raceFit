@@ -1,50 +1,12 @@
-# Welcome to your Expo app 👋
-
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
-
-## Get started
-
-1. Install dependencies
-
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+# RaceFit 🏃‍♂️⚡🏆
+RaceFit is the ultimate fitness competition app. Build your dream team, earn points through exercise, complete challenges, and compete for glory!
+🚀 Features
+💪 Team-Based Competition – Form or join teams to compete against friends and colleagues.
+🏅 Points for Activity – Run, cycle, walk, or work out to earn points. The more active you are, the higher you rank in your team.
+🎯 Challenges & Goals – Weekly and monthly challenges, personal or team-based, to boost your score.
+📊 Leaderboards – Track your ranking and see how you stack up against other teammates.
+🤝 Social Engagement – Share accomplishments, cheer on teammates, and celebrate victories together.
+⚙️ How It Works
+Sign Up & Create a Team – Join RaceFit and either create a team or join an existing one.
+Track Your Workouts – Log activities manually or connect your favorite fitness tracker.
+Earn Points – Complete exercises and challenges to accumulate points.
