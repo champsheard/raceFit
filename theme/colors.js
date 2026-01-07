@@ -9,7 +9,11 @@ export const theme = {
     placeholder: "#6B7280",
     error: "#DC2626",
     shadow: "#1E293B",
-    cardBackground: "#ffffff"
+    cardBackground: "#ffffff",
+    cardBorder: "rgba(0,0,0,0.08)",
+    divider: "rgba(0,0,0,0.1)",
+    success: "#10B981",
+    warning: "#F59E0B",
   },
 
   dark: {
@@ -22,6 +26,10 @@ export const theme = {
     placeholder: "#94A3B8",
     error: "#F87171",
     shadow: "#000000",
-    cardBackground: "#1D273C"
+    cardBackground: "#1D273C",
+    cardBorder: "rgba(255,255,255,0.08)",
+    divider: "rgba(255,255,255,0.1)",
+    success: "#34D399",
+    warning: "#FBBF24",
   },
 };

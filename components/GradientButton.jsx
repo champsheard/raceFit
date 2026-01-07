@@ -1,11 +1,20 @@
 import { LinearGradient } from "expo-linear-gradient";
-import { StyleSheet, Text, TouchableOpacity } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, useColorScheme } from "react-native";
+import { createComponentStyles } from "../styles/componentStyles";
+import { theme } from "../theme/colors";
+import { designSystem } from "../theme/designSystem";
 
-export default function GradientButton({ onPress, title, colors = ["#2563EB", "#5B9DFE"], disabled = false }) {
+export default function GradientButton({ onPress, title, colors = null, disabled = false }) {
+  const colorScheme = useColorScheme();
+  const themeColors = theme[colorScheme === "dark" ? "dark" : "light"];
+  const styles = createComponentStyles(themeColors);
+  
+  const gradientColors = colors || themeColors.buttonGradient;
+
   return (
-    <TouchableOpacity onPress={onPress} disabled={disabled} style={[s.wrapper, disabled && { opacity: 0.6 }]}>
-      <LinearGradient colors={colors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.button}>
-        <Text style={s.btnText}>{title}</Text>
+    <TouchableOpacity onPress={onPress} disabled={disabled} style={[s.wrapper, disabled && styles.disabledOpacity]}>
+      <LinearGradient colors={gradientColors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.buttonPrimary}>
+        <Text style={styles.buttonText}>{title}</Text>
       </LinearGradient>
     </TouchableOpacity>
   );
@@ -13,18 +22,7 @@ export default function GradientButton({ onPress, title, colors = ["#2563EB", "#
 
 const s = StyleSheet.create({
   wrapper: {
-    marginTop: 20,
+    marginTop: designSystem.spacing.lg,
     width: "100%",
-  },
-  button: {
-    height: 56,
-    borderRadius: 16,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  btnText: {
-    color: "#FFF",
-    fontSize: 18,
-    fontWeight: "600",
   },
 });

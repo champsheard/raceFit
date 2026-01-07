@@ -1,5 +1,6 @@
 
-import { Platform, StyleSheet } from "react-native";
+import { StyleSheet } from "react-native";
+import { designSystem } from "../theme/designSystem";
 
 export const authStyles = StyleSheet.create({
   // --- Layout ---
@@ -7,7 +8,7 @@ export const authStyles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 24,
+    paddingHorizontal: designSystem.layout.containerPadding,
   },
   innerContainer: {
     width: "100%",
@@ -16,65 +17,51 @@ export const authStyles = StyleSheet.create({
 
   // --- Title ---
   title: {
-    fontSize: 36,
-    fontWeight: "800",
+    ...designSystem.typography.headingLG,
     textAlign: "center",
-    marginBottom: 48,
-    letterSpacing: 0.4,
+    marginBottom: designSystem.spacing.xxxxl,
   },
 
   // --- Input Fields ---
   inputWrapper: {
-    marginBottom: 48,
+    marginBottom: designSystem.spacing.xxxxl,
   },
   label: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginBottom: 8,
-    marginLeft: 4,
+    ...designSystem.typography.labelLG,
+    marginBottom: designSystem.spacing.md,
+    marginLeft: designSystem.spacing.xs,
     opacity: 0.85,
   },
   input: {
-    borderRadius: 20,
-    paddingHorizontal: 20,
-    paddingVertical: Platform.OS === "ios" ? 16 : 14,
-    fontSize: 16,
+    borderRadius: designSystem.borderRadius.lg,
+    paddingHorizontal: designSystem.spacing.xl,
+    paddingVertical: designSystem.button.paddingVertical,
+    ...designSystem.typography.bodyMD,
     borderWidth: 1,
-    marginBottom: 14,
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    elevation: 1,
+    marginBottom: designSystem.spacing.md,
+    ...designSystem.shadows.sm,
   },
 
   // --- Button ---
   button: {
-    borderRadius: 24,
+    borderRadius: designSystem.borderRadius.xl,
     overflow: "hidden",
-    shadowColor: "#000",
-    shadowOpacity: 0.25,
-    shadowOffset: { width: 0, height: 6 },
-    shadowRadius: 12,
-    elevation: 6,
+    ...designSystem.shadows.premium,
   },
   buttonGradient: {
-    paddingVertical: 18,
+    paddingVertical: designSystem.spacing.lg,
     alignItems: "center",
   },
   buttonText: {
     color: "#fff",
-    fontSize: 18,
-    fontWeight: "700",
-    letterSpacing: 0.5,
-    textTransform: "uppercase",
+    ...designSystem.typography.buttonLG,
   },
 
   // --- Footer Links ---
   footerText: {
     textAlign: "center",
-    marginTop: 28,
-    fontSize: 15,
+    marginTop: designSystem.spacing.xxxl,
+    ...designSystem.typography.bodySM,
     opacity: 0.8,
   },
   footerLink: {
@@ -84,9 +71,9 @@ export const authStyles = StyleSheet.create({
   // --- Helper Text / Error States ---
   errorText: {
     color: "#FF4D4F",
-    fontSize: 13,
-    marginTop: 4,
-    marginLeft: 6,
+    ...designSystem.typography.bodyXS,
+    marginTop: designSystem.spacing.xs,
+    marginLeft: designSystem.spacing.sm,
   },
 
   // --- Animations / Transitions (for smooth feedback) ---

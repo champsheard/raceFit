@@ -1,46 +1,32 @@
-import { StyleSheet, Text, TextInput, View } from "react-native";
+import { StyleSheet, Text, TextInput, View, useColorScheme } from "react-native";
+import { createComponentStyles } from "../styles/componentStyles";
+import { theme } from "../theme/colors";
 
 export default function FormInput({ label, value, onChangeText, placeholder, keyboardType = "default", multiline = false }) {
+  const colorScheme = useColorScheme();
+  const colors = theme[colorScheme === "dark" ? "dark" : "light"];
+  const styles = createComponentStyles(colors);
+
   return (
-    <View style={s.card}>
-      <Text style={s.label}>{label}</Text>
+    <View style={s.wrapper}>
+      <Text style={[styles.label]}>{label}</Text>
       <TextInput
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor="#888"
+        placeholderTextColor={colors.placeholder}
         keyboardType={keyboardType}
         multiline={multiline}
-        style={[s.input, multiline && s.textArea]}
+        style={[styles.input, multiline && s.textArea]}
       />
     </View>
   );
 }
 
 const s = StyleSheet.create({
-  card: {
+  wrapper: {
     width: "100%",
-    padding: 20,
-    borderRadius: 18,
     marginBottom: 20,
-    backgroundColor: "#fff",
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 4,
-  },
-  label: {
-    fontSize: 14,
-    marginBottom: 6,
-    color: "#555",
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 12,
-    padding: 14,
-    fontSize: 16,
-    color: "#000",
   },
   textArea: {
     height: 100,

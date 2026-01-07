@@ -12,6 +12,7 @@ import { createContext, useEffect, useState } from "react";
 import { Alert } from "react-native";
 import { auth, db } from "../utils/firebase";
 
+
 export const AuthContext = createContext();
 
 export function AuthProvider({ children }) {

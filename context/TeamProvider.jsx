@@ -5,6 +5,22 @@ import { db } from "../utils/firebase";
 
 export const TeamContext = createContext();
 
+/* ---------------------- HELPER: LOG POINTS TO USER DOC --------- */
+const logPointsToUser = async (userId, teamId, amount, meta = {}) => {
+  try {
+    const pointsLogRef = doc(collection(db, "users", userId, "points"));
+    await setDoc(pointsLogRef, {
+      teamId,
+      amount,
+      timestamp: new Date().toISOString(),
+      date: new Date().toISOString().split("T")[0],
+      ...meta,
+    });
+  } catch (error) {
+    console.error("Error logging points to user:", error);
+  }
+};
+
 export function TeamProvider({ children }) {
   const { user } = useContext(AuthContext);
   const [teams, setTeams] = useState([]);
@@ -38,10 +54,13 @@ export function TeamProvider({ children }) {
       });
 
       await setDoc(doc(db, "teams", teamRef.id, "users", ownerID), {
+        name: user.displayName || "Unnamed",
         points: 0,
         id: ownerID,
         joinedAt: new Date().toISOString(),
         lastPointChange: null,
+        dailyPoints: {},
+        weeklyPoints: 0,
       });
 
       return teamRef.id;
@@ -171,11 +190,27 @@ const joinTeamByCode = async (code, userInfo = {}) => {
       const snap = await getDoc(userRef);
       if (!snap.exists()) return false;
 
-      const prev = snap.data().points || 0;
+      const today = new Date().toISOString().split("T")[0];
+      const userData = snap.data();
+      const dailyPoints = userData.dailyPoints || {};
+      const currentDailyPoints = dailyPoints[today] || 0;
+
       await updateDoc(userRef, {
-        points: prev + amount,
-        lastPointChange: { timestamp: new Date().toISOString(), amount },
+        points: (userData.points || 0) + amount,
+        weeklyPoints: (userData.weeklyPoints || 0) + amount,
+        dailyPoints: {
+          ...dailyPoints,
+          [today]: currentDailyPoints + amount,
+        },
+        lastPointChange: { 
+          timestamp: new Date().toISOString(), 
+          amount,
+          date: today,
+        },
       });
+
+      // Log points to user's points subcollection
+      await logPointsToUser(userId, amount);
 
       return true;
     } catch (error) {
@@ -186,10 +221,29 @@ const joinTeamByCode = async (code, userInfo = {}) => {
 
   const updateUserPoints = async (teamId, userId, newPoints) => {
     try {
-      await updateDoc(doc(db, "teams", teamId, "users", userId), {
+      const today = new Date().toISOString().split("T")[0];
+      const userRef = doc(db, "teams", teamId, "users", userId);
+      const snap = await getDoc(userRef);
+      const userData = snap.data();
+      const dailyPoints = userData?.dailyPoints || {};
+      
+      await updateDoc(userRef, {
         points: newPoints,
-        lastPointChange: { timestamp: new Date().toISOString(), amount: newPoints },
+        weeklyPoints: newPoints,
+        dailyPoints: {
+          ...dailyPoints,
+          [today]: newPoints,
+        },
+        lastPointChange: { 
+          timestamp: new Date().toISOString(), 
+          amount: newPoints,
+          date: today,
+        },
       });
+
+      // Log points to user's points subcollection
+      await logPointsToUser(userId, teamId, newPoints, { isUpdate: true });
+
       return true;
     } catch (error) {
       console.error("Error updating points:", error);
@@ -205,11 +259,146 @@ const joinTeamByCode = async (code, userInfo = {}) => {
 
       const usersSnapshot = await getDocs(collection(db, "teams", teamId, "users"));
       const users = usersSnapshot.docs.map((u) => ({ id: u.id, ...u.data() }))
-        .sort((a, b) => b.points - a.points);
+        .sort((a, b) => b.weeklyPoints - a.weeklyPoints);
 
       callback({ id: teamDoc.id, ...teamDoc.data(), users });
     });
   };
+
+  // Get daily breakdown for a user in a team
+  const getUserDailyBreakdown = (user) => {
+    if (!user?.dailyPoints) return {};
+    return user.dailyPoints;
+  };
+
+  // Reset weekly points (call this at the start of each week)
+  const resetWeeklyPoints = async (teamId) => {
+    try {
+      const usersSnapshot = await getDocs(collection(db, "teams", teamId, "users"));
+      
+      const ops = usersSnapshot.docs.map((userDoc) => {
+        return updateDoc(doc(db, "teams", teamId, "users", userDoc.id), {
+          weeklyPoints: 0,
+          dailyPoints: {},
+        });
+      });
+
+      await Promise.all(ops);
+      return true;
+    } catch (error) {
+      console.error("Error resetting weekly points:", error);
+      return false;
+    }
+  };
+
+  // Clear all activity logs for a team (call at the end of the week)
+  const clearWeeklyActivityLog = async (teamId) => {
+    try {
+      const activitiesSnapshot = await getDocs(
+        collection(db, "teams", teamId, "activities")
+      );
+
+      const ops = activitiesSnapshot.docs.map((activityDoc) => {
+        return deleteDoc(doc(db, "teams", teamId, "activities", activityDoc.id));
+      });
+
+      await Promise.all(ops);
+      return true;
+    } catch (error) {
+      console.error("Error clearing activity log:", error);
+      return false;
+    }
+  };
+
+  // Get activity log for a team
+  const getWeeklyActivityLog = async (teamId) => {
+    try {
+      const activitiesSnapshot = await getDocs(
+        collection(db, "teams", teamId, "activities")
+      );
+
+      return activitiesSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+    } catch (error) {
+      console.error("Error fetching activity log:", error);
+      return [];
+    }
+  };
+  const addPointsToMembers = async (teamId, userIds = [], amount, meta = {}) => {
+  try {
+    if (!teamId || !userIds.length || !amount) return false;
+
+    const today = new Date().toISOString().split("T")[0];
+    const now = new Date().toISOString();
+
+    // Collect user data for activity log
+    const users = [];
+    const updateOps = [];
+
+    for (const userId of userIds) {
+      const userRef = doc(db, "teams", teamId, "users", userId);
+      const snap = await getDoc(userRef);
+      if (!snap.exists()) continue;
+
+      const userData = snap.data();
+      users.push({
+        userId,
+        userName: userData.name || "Unnamed",
+      });
+
+      const dailyPoints = userData.dailyPoints || {};
+      const currentDailyPoints = dailyPoints[today] || 0;
+      const prev = userData.points || 0;
+
+      const lastPointChangeData = {
+        timestamp: now,
+        amount,
+        date: today,
+        ...meta,
+      };
+
+      updateOps.push(
+        updateDoc(userRef, {
+          points: prev + amount,
+          weeklyPoints: (userData.weeklyPoints || 0) + amount,
+          dailyPoints: {
+            ...dailyPoints,
+            [today]: currentDailyPoints + amount,
+          },
+          lastPointChange: lastPointChangeData,
+        })
+      );
+    }
+
+    // Log activity with array of users
+    const activityLogRef = doc(
+      collection(db, "teams", teamId, "activities")
+    );
+    await setDoc(activityLogRef, {
+      users,
+      amount,
+      timestamp: now,
+      date: today,
+      ...meta,
+    });
+
+    await Promise.all(updateOps);
+
+    // Log points for each user in their points subcollection
+    const logOps = userIds.map((userId) =>
+      logPointsToUser(userId, teamId, amount, meta)
+    );
+    await Promise.all(logOps);
+
+    return true;
+  } catch (error) {
+    console.error("Error adding points to multiple members:", error);
+    return false;
+  }
+};
+
 
   /* ---------------------- AUTO LISTEN TO TEAMS ------------------ */
   useEffect(() => {
@@ -221,15 +410,23 @@ const joinTeamByCode = async (code, userInfo = {}) => {
   return (
     <TeamContext.Provider
       value={{
-        teams,
-        loadingTeams,
-        getTeams,
-        createTeam,
-        joinTeam: joinTeamByCode,
-        leaveTeam,
-        addPoints,
-        updateUserPoints,
-        listenToTeam,
+    teams,
+    loadingTeams,
+    getTeams,
+    createTeam,
+    joinTeam: joinTeamByCode,
+    leaveTeam,
+
+    // points
+    addPoints,
+    addPointsToMembers,
+    updateUserPoints,
+
+    listenToTeam,
+    getUserDailyBreakdown,
+    resetWeeklyPoints,
+    clearWeeklyActivityLog,
+    getWeeklyActivityLog,
       }}
     >
       {children}

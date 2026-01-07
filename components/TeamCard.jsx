@@ -1,19 +1,21 @@
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import {
-  Animated,
-  Platform,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  useColorScheme,
-  View,
+    Animated,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    useColorScheme,
+    View
 } from "react-native";
+import { createComponentStyles } from "../styles/componentStyles";
 import { theme } from "../theme/colors";
+import { designSystem } from "../theme/designSystem";
 
 export default function TeamCard({ item, onPress }) {
   const colorScheme = useColorScheme();
   const palette = colorScheme === "dark" ? theme.dark : theme.light;
+  const styles = createComponentStyles(palette);
 
   if (!item || !item.id) return null;
 
@@ -35,19 +37,19 @@ export default function TeamCard({ item, onPress }) {
       onPressIn={onPressIn}
       onPressOut={onPressOut}
       onPress={onPress}
-      style={{ marginBottom: 14 }}
+      style={{ marginBottom: designSystem.spacing.md }}
     >
       <View
         style={[
-          styles.card,
+          s.card,
           { backgroundColor: palette.cardBackground, shadowColor: palette.shadow },
         ]}
       >
         <View style={{ flex: 1 }}>
-          <Text style={[styles.teamName, { color: palette.text }]}>
+          <Text style={[styles.titleMD, { color: palette.text }]}>
             {item.name}
           </Text>
-          <Text style={[styles.memberCount, { color: palette.textSecondary }]}>
+          <Text style={[s.memberCount, { color: palette.textSecondary }]}>
             {item.users?.length || 0} members
           </Text>
         </View>
@@ -63,28 +65,18 @@ export default function TeamCard({ item, onPress }) {
 );
 }
 
-const styles = StyleSheet.create({
+const s = StyleSheet.create({
   card: {
-    paddingVertical: 18,
-    paddingHorizontal: 22,
-    borderRadius: 20,
+    paddingVertical: designSystem.spacing.lg,
+    paddingHorizontal: designSystem.spacing.xl,
+    borderRadius: designSystem.card.borderRadius,
     flexDirection: "row",
     alignItems: "center",
-
-    // Better premium shadows
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: Platform.OS === "android" ? 5 : 0,
-  },
-  teamName: {
-    fontSize: 18,
-    fontWeight: "700",
+    ...designSystem.shadows.lg,
   },
   memberCount: {
-    marginTop: 4,
-    fontSize: 14,
-    fontWeight: "500",
+    marginTop: designSystem.spacing.xs,
+    ...designSystem.typography.bodySM,
     opacity: 0.8,
   },
 });
